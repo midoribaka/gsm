@@ -1,0 +1,52 @@
+R1 10k - all SMD 0805
+R2 100k
+R3 10k
+R4 100k
+R5 10k
+R6 100k
+R7 10k
+R8 100k
+R9 1k
+R10 330
+R11 33k
+R12 1k
+R13 1k
+R14 8k2
+R15 10k
+R16 4k7
+R17 10k
+R18 4k7
+R19 10k -
+R20 100k -
+C1 100n – SMD 0805
+C2 100n – SMD 0805
+C3 100n – SMD 0805
+C4 100 – SMD 0805
+C5 22p – SMD 0805
+C6 22p – SMD 0805
+C7 22n – SMD 0805
+C8 100n – SMD 0805
+C9 1u – SMD 0805
+C10 10u - leaded
+D1 BAT54
+D2 BAT54
+D3 4V7 zener diode - leaded
+D4 1N4005 - leaded
+D5 1N4005 - leaded
+D6 BAT54
+D7 BAT54
+D8 yellow 3 mm LED – leaded
+D9 BAT54 (optional – for O3 output)
+T1 small signal NPN in SOT-23
+T2 small signal NPN in SOT-23
+T3 small signal NPN 600mA in SOT-23
+T4 small signal PNP in SOT-23
+T5 small signal NPN in SOT-23
+X1 4 MHZ crystal HC-49U
+IC1 16F628A/16F648A - DIP
+IC2 78L05 - TO-92
+RE1 Omron G2RL-1-12V /G5S-1-12V
+Connector:
+5x 3-pin connector, pin space 5 mm
+2x 2 pin connector, pin space 5 mm
+PCB SIO-4-01 

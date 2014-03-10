@@ -1,0 +1,334 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1251">
+  <!-- Created with AOLpress/2.0 -->
+  <!-- AP: Created on: 27-Jan-2009 -->
+  <!-- AP: Last modified: 27-Jan-2009 -->
+  <title>Please title this page. (userman.htm)</title>
+</head>
+<body>
+<h2>
+  Introduction
+</h2>
+<p>
+This is a description on how you can build your own system allowing you to
+receive a SMS message when an input in changed and have the ability to switch
+on/off an output by sending a SMS to the system. The included software supports
+4 input and 1 output, and 1 phone number for receiver of the SMS. You can
+send a SMS turning the output on/off, enable/disable the input lines or request
+a status for the outputs. Switching on/off (or enable/disable) is protected
+by a 4 digit pin code. There is a circuit for battery backup up included
+and the main power supply is monitored by the Bug, so you will get a SMS
+if it is lost (if you use the battery backup).
+</p><p>
+That’s it. It is simple and nothing more (you can find a lot of other
+application showing similar functions but they are often very early prototypes,
+no source code, with the ‘wrong’ processor or including a lot of
+fancy functionalities. This one is completed – all inclusive!) The Bug
+uses a standard GSM modem (Wavecom or Siemens works fine) but some used old
+mobile phones will do it too if they support Text format for SMS (if they
+don’t buy you a new one. It is more than 10 years ago since text mode
+became a standard and if you don’t have a real modem buy you one. You
+can find a cheap GSM modem on ebay). This article includes the full documentation
+and all you will need. It for free and you can use it or modify if you like
+(if you like it, or do the ultimate modification feel free to drop me a mail).
+</p><p>
+The ZIP file includes:
+</p><ul>
+  <li>
+    Schematic diagram
+  </li><li>
+    Part list incl. component layout
+  </li><li>
+    Gerber &amp; NC drill files for PCB.
+  </li><li>
+    Source code for the application.
+  </li><li>
+    HEX code ready for the PIC.
+</li></ul>
+<p>
+Enjoy the project,
+</p><p>
+Ole Wulff (owdk at yahoo-dot-com)
+</p><h2>
+  Using the System
+</h2>
+<h3>
+  Prepare the SIM card
+</h3>
+<p>
+- remove pin code on the card.
+</p><p>
+- create an entry in phone book on the SIM card with name ‘PRI’
+and with the mobile phone number on which you what to receive the messages.
+The phone number should be in international format, e.g. +45xxxxxxxx for
+Denmark. 
+</p><p>
+Put in SIM card in card holder on the modem.
+</p><p>
+I recommend a pre-paid SIM card or a card with limit amount to make sure
+that you won’t loose a fortune is you application goes crazy and switching
+on and off the inputs constantly (up to 30 SMS will in this case be send
+per minute!)
+</p><h3>
+  Power on the system
+</h3>
+<p>
+The LED will turn after a few seconds showing that the unit is initializing.
+After a few seconds the LED turns off again and the system is ready (this
+period can be longer – 1 min. - depending on how fast your modem got
+registered at the GSM net). From now on the LED will light shortly every
+10th second when the system is checking for at new SMS or when an input is
+activated showing an SMS is being send.
+</p><p>
+If the LED does not turn off and continue to flash something went wrong when
+initializing (either no contact to modem or phone number no read correctly
+from the SIM card. Check the card and the communication).
+</p><h3>
+  Receiving an alarm
+</h3>
+<p>
+The system will send you a SMS every times on of the input in changed from
+normal state to alarm state (before a new SMS will be send for this input,
+the input need to be in normal state again). The text messages are fixed
+for this system (“INx Activated” for inputs and “Main Power
+Lost/Restored” for power monitoring). If you need special text you will
+need to compile your own version (see later in the technical description).
+</p><p>
+If a battery backup is connected to the system you will receive a SMS when
+the main power is lost and when it is restored.
+</p><p>
+Input1 and 4 are ‘normal closed’ circuits, which means that a SMS
+is send when the connection to ground is removed. The input 2 and 3 are
+‘normal open’ circuit. All the input must be connected to potential
+free contacts or to an open-collector switch. 
+</p><p>
+Do not under any circumstances put power directly to the input as this will
+kill the processor.
+</p><h3>
+  Controlling the system
+</h3>
+<p>
+You can control the output by sending a SMS to the system. In every 10th
+second the system will check if a new SMS is received. Three simple commands
+are implemented:
+</p><p>
+<table cellpadding="2">
+  <tbody><tr>
+    <td><tt>#xxxx:0 </tt></td>
+    <td>Turn the output OFF</td>
+  </tr>
+  <tr>
+    <td><tt>#xxxx:1 </tt></td>
+    <td>Turn the output ON</td>
+  </tr>
+  <tr>
+    <td><tt>#xxxx:A </tt></td>
+    <td>Arm/Enable the inputs</td>
+  </tr>
+  <tr>
+    <td><tt>#xxxx:D </tt></td>
+    <td>Disarm/disable the inputs</td>
+  </tr>
+  <tr>
+    <td><tt>#xxxx:? </tt></td>
+    <td>Return a SMS with a status of the output.</td>
+  </tr>
+  <tr>
+    <td><tt>#xxxx:v </tt></td>
+    <td>Return firmware version</td>
+  </tr>
+</tbody></table>
+</p><p>
+xxxx is the pin code for the system. This is the last for digits of the phone
+number ‘PRI’ read when then system initialized.
+</p><p>
+When the system is powered up, the input will be enabled as default and the
+output will be off.
+</p><p>
+If you disable the inputs the LED will reverse its function: Staying ON most
+of the time and going OFF when the SMS is checked or an SMS is send. 
+</p><p>
+The input can also be disabled if the D1 input is connected to minus (normal
+state is high).
+</p><p>
+Note: If you have turn off the input by D1 you will not be able to turn the
+input on by sending a SMS (if you are using the system as an alarm system
+you wont like the system to be armed remotely while you are in the house…)
+</p><p>
+When the system receives the command it will be executed and a status SMS
+showing the result of the command will be returned to you so always know
+if the operation is completed.
+</p><h3>
+  Using it as an alarm system
+</h3>
+<p>
+On the board you will also find a open-collector output on pin O3. This pin
+will be activated for 3 minutes if input 1 to 4 is activated and the inputs
+are enabled. This output can be connected to a siren (max. 500 mA) to build
+a simple system. If you send an SMS turning the alarm off or disable the
+input by a switch on O3 the output will immediate turn off.
+</p><h2>
+  Building the system
+</h2>
+<p>
+You can build the system using a proto type board or build the system using
+the shown PCB (you can buy both PCB and a pre-programmed processor from me).
+If you don’t modify the source code just find a PIC programmer and put
+the .HEX file into PIC. Connect the bug to the modem and you are ready to
+go. The inputs 1 and 4 are ‘normal closed’ and 2 and 3 are ‘nomal
+open’. ‘Normal Closed’ means that they need to be connected
+to minus/ground when not activated and left open when activated (this does
+exactly fit the output from passive infrared sensors and other alarm equipment,
+so you can build a simple alarm system).
+</p><p>
+If you want to use the option for battery backup in case of power failure,
+you can connect a standard 9-12 V battery to the ‘B+’ terminal.
+</p><h3>
+  Prepare the GSM modem
+</h3>
+<p>
+You can use every kind of modem supporting the shown commands (see figure)
+– all modem types from Wavecom, Siemens M20 modem, Siemens S45 telephone
+and Nokia 6210 have been tested,. The modem must be connected through a real
+RS-232 connection (the same as the one you find on a PC). Connect the modem
+to a PC and check the commands AND the respond (some modem sends other respond
+and you might need to adapt the software).
+</p><p>
+The modem will normally have been set for auto baud rate as factory default.
+To ensure proper functionality lock the modem to fixed baud rate: 9600 baud
+using the following AT commands send to the modem from your PC (using eg.
+hyperterminal):
+</p><p>
+AT+IPR=9600 (9600 baud)<br>
+AT+ICF=3,0 (8 data bit-No parity-1 stop bit<br>
+AT+IFC=0,0 (no flow control)<br>
+AT&amp;W (store as default)
+</p><p>
+Cycle power and check if the modem respond to baud rate set to: 9600, 8 bit
+data, 1 stop bit and no parity as default.
+</p><h3>
+  The technical part
+</h3>
+<p>
+The software is written in a combination of Basic and Assembler using the
+PIC Simulator from Validimir Soso. A super fine development tool. You can
+test it for free or you can buy you own license for a few Euro’s (check
+<a href="http://www.oshonsoft.com/">www.oshonsoft.com</a>).
+</p><p>
+The Basic in the simulator includes commands for communicating through the
+serial port on the PIC, but there is no error handling in the receiver routine
+and to ensure full stability in the software a new receive routine has been
+written in assembler (this is based on the studio of PIC hardware serial
+port written in PICUART.ASM document. You can find it on the net too). Rest
+of the code is written in Basic so it is straight forward to debug if you
+want to modify.
+</p><p>
+After initializing the modem (the software check for a respond from the modem
+before trying to do further communication) the software reads the phone number
+from the SIM card and stores it in local memory. After this it goes into
+a loop checking the inputs incl. power and very 10 seconds checking for a
+new SMS.
+</p><p>
+If an input is activated the phone number is read from memory and send to
+the modem followed by the messages.
+</p><p>
+If a new SMS is received the modem will store it in position 1 if free otherwise
+it will be stored on the first free location. By clearing the first position
+we ensure that any new message will be stored here. This simplifies the software
+as it only needs to check for new message on this position. If a new message
+has arrived it will be read, decoded and deleted.
+</p><p>
+The decoding part checks that the pin code in the message is identically
+with the last four digits of the phone number. If ok the included command
+is executed.
+</p><p>
+Polling the modem every 10th second is simple method but it has a disadvantage.
+If the system receives two new messages in a row it will only be able to
+handle the first one and the other one will be lost. Due to this you should
+disable any ‘service information’ from your GSM operator to limit
+the amount of crappy SMS received. If you send a command to the system and
+you don’t get at respond within a minute, then just resend it.
+</p><p>
+For this simple setup only five commands are implemented: Two for switching
+the output ON/OFF, two for enable/disable the inputs and one for asking for
+status for the output.
+</p><p>
+It is easy to add more commands if you like (find the section in the code
+where the pin code is checked and put in you own commands)
+</p><h3>
+  SMS / GSM fundamental
+</h3>
+<p>
+The following commands are used for communication with the modem.
+</p><p>
+<table cellpadding="2" border="">
+  <tbody><tr>
+    <td><b>Command </b></td>
+    <td><b>Respond </b></td>
+    <td><b>Comment</b></td>
+  </tr>
+  <tr>
+    <td><tt>AT </tt></td>
+    <td><tt>OK</tt> </td>
+    <td>Check if modem is ready for communication</td>
+  </tr>
+  <tr>
+    <td><tt>ATE0 </tt></td>
+    <td><tt>OK</tt> </td>
+    <td>Disable echo from modem. If you are debugging it might be nice to switch
+      echo on by ate1</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CNMI=0,0,0,0 </tt></td>
+    <td><tt>OK</tt> </td>
+    <td>Setup respond from modem when a SMS is received (send nothing –
+      we use polling technique on the modem)</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CMGF=1 </tt></td>
+    <td><tt>OK</tt> </td>
+    <td>Set text mode for modem. If you modem does not support txt modem but
+      only pdu, buy you a new one!</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CMGD=1 </tt></td>
+    <td><tt>OK</tt> </td>
+    <td>Delete the message in 1st position. If 1st position is empty a new messages
+      will always be stored there.</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CPMS=”SM” </tt></td>
+    <td><tt>+CPMS: x,y,x,y x,y </tt></td>
+    <td>Use SIM card phone book.</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CMGS=”+xxxxxxxx”</tt></td>
+    <td><tt>&gt; </tt></td>
+    <td>Tell the modem to send a SMS to phone number: xxxxx The text is send
+      right after the command and ended by Ctrl-Z character (ASCII 26).</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CMGR=1 </tt></td>
+    <td><tt>+CMGR: "REC UNREAD","+45xxxxxxxx",,
+      "dd/mm/yy,hh:mm:ss+08"'#1234:0'</tt></td>
+    <td>Read the SMS in 1st. position. You will get an error if not available</td>
+  </tr>
+  <tr>
+    <td><tt>AT+CPBF=”PRI” </tt></td>
+    <td><tt>+CPBF:1,"+45xxxxxxxx",145,"PRIMARY"</tt></td>
+    <td>Read the entry ‘PRI’ in the phone book. Note: Some modems are
+      case sensitive other responds if only a part of the string matches. </td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</tbody></table>
+</p><p>
+All commands are followed by CrLF, except after the message where is should
+be Ctrl-Z
+</p><p>
+GSM SMS commands in a nut shell
+
+</p></body></html>

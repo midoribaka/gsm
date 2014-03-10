@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+NCDrill File Report For: SIO4-01.PCB   31-Jan-2009  21:53:53
+---------------------------------------------------------------------------
+
+
+
+Layer Pair : TopLayer to BottomLayer
+ASCII File : NCDrillOutput.TXT
+EIA File   : NCDrillOutput.DRL
+
+Tool         Hole Size          Hole Count Plated       Tool Travel
+---------------------------------------------------------------------------
+T1        28mil (0.7112mm)         41               9.82 Inch (249.47 mm)
+T2        39mil (0.9906mm)         8                4.49 Inch (114.09 mm)
+T3        130mil (3.302mm)         2                2.57 Inch (65.20 mm)
+T4        51mil (1.2954mm)         29               9.28 Inch (235.60 mm)
+T5        43mil (1.0922mm)         9                2.75 Inch (69.91 mm)
+---------------------------------------------------------------------------
+Totals                             89               28.91 Inch (734.28 mm)
+
+Two holes at same point : 1
+-----------------------
+750,335
+
+Total Processing Time : 00:00:01
