@@ -1,9 +1,9 @@
 ;gsmhorn1.asm v1.1 for Siemens A35
 ;*** Assembler directives**************************************************************
-            LIST      p=16F628a     ; Определение типа микроконтроллера.
+            LIST      p=16F628a     ; я▓ф└ф▄ф▌й┘ у┴я│ н┴л▓п▀п▌у▓п▄м┘с│.
 #include   <p16F628A.inc>
-            __CONFIG  03F21H       ; Биты конфигурации: защита выключена, WDT выкл,
-                                   ; стандартный XT - генератор, PWRTE включен.
+            __CONFIG  03F21H       ; Ц┼■ы═л▐о├й┤ж▓б┐й┴: ш│ч┴у│ ь≥л▄^ф▌l WDT ь≥л▄,
+                                   ; т■б▌е│с■о≥й═XT - х┘о┘с│у▐р╛ PWRTE ь▀м─ъ┘н╝
 LENGTH      EQU 0x20     ; Length to send
 NEW_SIGNAL  EQU 0x21     ; Bit0=1 if waiting for a new signal (to avoid sending the first 'random' LENGTH)
 OBYTE       EQU 0x22     ; Original byte used in receive subroutine
@@ -18,11 +18,11 @@ count0      EQU 0x28
 reset       GOTO init    ; Go to initialization
             ORG  0x009 
 ;*** Initializations ********************************************************************
-init        bsf        STATUS,RP0  	; "Двойная" "штатная"  команда установки 
-            bcf        STATUS,RP1  	; 1-го банка.
-            clrf       VRCON^80H        ; Отключение источника опорного напряжения.
+init        bsf        STATUS,RP0  	; "Е≤▐к▌б▒" "э■б■о│я╒  л▐н│о└`ж⌠у│о▐ь▀и═
+            bcf        STATUS,RP1  	; 1-х▐ ц│о▀n
+            clrf       VRCON^80H        ; у▀м─ъ┘о┴е═й⌠у▐ъ▌й▀`п░п▓о▐х▐ о│я▓р√ф▌й▒.
 
-            MOVLW     b'11000101'        ; прерывание по переднему фронту
+            MOVLW     b'11000101'        ; я▓ф▓з≈б▌й┘ я▐ я┘с┘е▌ф█у═г▓п▌у∙
             MOVWF     OPTION_REG^80H     ; Configure options
             MOVLW     b'11111011'        ; RB0 (interrupt)  RB3 as output, others as inputs
             MOVWF     TRISB^80H          ; Configure PORTB
@@ -30,7 +30,7 @@ init        bsf        STATUS,RP0  	; "Двойная" "штатная"  команда установки
             MOVWF     TRISA^80H          ; Configure PORTA
 
             BCF       STATUS,RP0         ; Return to Bank 0
-            movlw      .07         	 ; Отключение компараторов.
+            movlw      .07         	 ; у▀м─ъ┘о┴е═л▐н░б▓б■п▓п≈.
             movwf      CMCON       	 ; --------"--------
             clrf       T1CON       	 ; ----"----  TMR1.
             clrf       T2CON       	 ; ----"----  TMR2.
@@ -65,7 +65,7 @@ init        bsf        STATUS,RP0  	; "Двойная" "штатная"  команда установки
             call      delay_4sec
             call      delay_4sec
 
-            BSF       INTCON,4           ;разрешение прерывания
+            BSF       INTCON,4           ;с│ш▓ф⌡ф▌й┘ я▓ф▓з≈б▌й▒
             BSF       PORTA,2
             CALL      delay_1sec 
             BCF       PORTA,2 
@@ -78,7 +78,7 @@ init        bsf        STATUS,RP0  	; "Двойная" "штатная"  команда установки
 thru        SLEEP 
             bcf      INTCON,1
 thru1       SLEEP  
-;По выходу из спячки зажигаем светодиод
+;М÷╬О©╫з┬п└у═й  т░р·л┴ ш│в┴х│ф█ т≈ф■п└й▐д█
             bsf       PORTA,2
             call      delay_4sec
             call      delay_4sec
@@ -92,7 +92,7 @@ thru1       SLEEP
             bcf       PORTA,2
 
 ALARM       BSF       PORTA,3 
-;Подать команду "ATH0"
+;М÷╪О©╫у≤ л▐н│о└у═"ATH0"
             MOVLW     d'6'               
             CALL      tx_w               
             MOVLW     d'5'               
@@ -110,7 +110,7 @@ ALARM       BSF       PORTA,3
             MOVLW     d'13'              ; ASCII code for Enter
             CALL      tx_w               ; Send W
             CALL      delay
-;Команда "ATD>1;"
+;Л░█б▌е│ "ATD>1;"
             MOVLW     d'6'                
             CALL      tx_w                
             MOVLW     d'7'                
@@ -131,9 +131,9 @@ ALARM       BSF       PORTA,3
             CALL      tx_w               ; Send W
             MOVLW     d'13'              ; ASCII code for Enter
             CALL      tx_w               ; Send W
-;выдерживаем большую паузу
+;ь≥е┘с√й≈б┘м═ц▐м≤э∙ я│ж у█
             CALL      big_delay
-;Команда ATH0
+;Л░█б▌е│ ATH0
             MOVLW     d'6'               
             CALL      tx_w                
             MOVLW     d'5'               
@@ -151,7 +151,7 @@ ALARM       BSF       PORTA,3
             MOVLW     d'13' 
             CALL      tx_w 
             CALL      delay
-;Команда "ATD>2;"
+;Л░█б▌е│ "ATD>2;"
             MOVLW     d'6'                
             CALL      tx_w               
             MOVLW     d'7'               
@@ -172,10 +172,10 @@ ALARM       BSF       PORTA,3
             CALL      tx_w 
             MOVLW     d'13' 
             CALL      tx_w 
-;выдерживаем большую паузу
+;ь≥е┘с√й≈б┘м═ц▐м≤э∙ я│ж у█
             CALL      big_delay
             bcf       PORTA,3
-            BCF       INTCON,1           ;сбросить бит прерывания
+            BCF       INTCON,1           ;т┌с▐т┴у≤ ц┴т═я▓ф▓з≈б▌й▒
             btfsc     PORTB,0
             goto      ALARM
             GOTO      thru1
@@ -262,7 +262,7 @@ mm:         BSF       PORTB,3
             RETURN 
 
 
-;*** Подпрограмма задержки в 1 секунду *** 
+;*** М÷╪О©╫с▐х▓б█н│ ш│е┘с√л┴ в═1 т┘л∙о└у═*** 
 delay_1sec   
              movlw            .66  
              movwf            count0
@@ -273,7 +273,7 @@ ms           btfss	      INTCON,T0IF
              decfsz           count0,f
              goto             sec          
              return  
-;*** Подпрограмма задержки в 4 секунды*** 
+;*** М÷╪О©╫с▐х▓б█н│ ш│е┘с√л┴ в═4 т┘л∙о└ы╙** 
 delay_4sec:   
              movlw            .255  
              movwf            count0
