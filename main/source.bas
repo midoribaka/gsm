@@ -1,11 +1,5 @@
 '**********************************
-'TheBug, SIO4-00
-'GSM Supervision and control system
-'Sends alarms as SMS text through a GSM modem
-'Receives SMS commands for switching on a relay
-'Ready for flash for PCB: SIO4-00
-'version no. 0.b
-'(c) 2008 - owdk (at) yahoo.com
+'GSM alarm system
 '**********************************
 
 'configure the appropriate port and pin directions
