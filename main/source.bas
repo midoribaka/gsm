@@ -572,6 +572,3 @@ ASM:        bsf intcon,gie
 ASM:        goto ser_in
 ASM:end_call: movwf serdata
 Return                                            
-
-
-
