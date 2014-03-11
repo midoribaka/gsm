@@ -2,9 +2,9 @@
 'GSM alarm system
 '**********************************
 
-'configure the appropriate port and pin directions
+'настройка портов и направления контактов
 TRISA = %11110110
-TRISB = %01011111  'RS232 output must be conf. as 'input' to tri-state I/O driver
+TRISB = %01011111  'выход RS232 должен быть определен как вход, из-за драйвера ввода-вывода
 
 'Declare variables
 Dim i As Word
@@ -16,7 +16,7 @@ Dim n As Byte
 Dim a As Byte
 
 Dim temp As Byte
-Dim data(64) As Byte  'buffer for serial data
+Dim data(64) As Byte  'буфер
 Dim serdata As Byte
 
 Dim startmark As Bit
@@ -25,55 +25,55 @@ Dim pincode As Bit
 Dim smsreceived As Bit
 Dim modemready As Bit
 
-Dim check_sms_count As Byte  'Number of sec. before next check of SMS
-Dim alarmcount As Byte  'Number of sec. before turning off the output
-Dim delaycount As Byte  'No. of delays per sec.
+Dim check_sms_count As Byte  'Количество секунд до следующей проверки входящих СМС
+Dim alarmcount As Byte  'Количество секунд до отключения выхода
+Dim delaycount As Byte  'Количество задержек в секунду
 
-Dim hour As Byte  'variables for the internal clock - clock not used
+Dim hour As Byte  'Переменные для внутренних часов
 Dim min As Byte
 Dim sec As Byte
 
 Dim hw_enable_status As Bit
-Dim armed As Bit  'input enabled = 1
+Dim armed As Bit  'Если вход включен = 1
 
-Dim z1trigged As Bit  'set if zone is trigged
-Dim z2trigged As Bit  'set if zone is trigged
-Dim z3trigged As Bit  'set if zone is trigged
-Dim z4trigged As Bit  'set if zone is trigged
+Dim z1trigged As Bit  'Устанавливается, если зона активировалась
+Dim z2trigged As Bit  'Устанавливается, если зона активировалась
+Dim z3trigged As Bit  'Устанавливается, если зона активировалась
+Dim z4trigged As Bit  'Устанавливается, если зона активировалась
 
 Dim pwr_status As Bit
 Dim powerfailure As Bit
 
 
-'Definition of I/O ports
-'remember to set TRISA and TRISB according to I/O definition
+'Определение портов ввода-вывода
+'не забыть установить TRISA и TRISB согласно настройкам ввода-вывода
 
-Symbol hw_enable = PORTA.2  'high= inputs enabled
-Symbol zone1 = PORTB.4  'input: zone 1, low=active
-Symbol zone2 = PORTB.3  'input: zone 2, low=active
-Symbol zone3 = PORTB.0  'input: zone 3, low=active
-Symbol zone4 = PORTA.4  'input: zone 4, low=active
-Symbol aux_out = PORTA.0  'Siren port
-Symbol relay = PORTA.3  'output relay
-Symbol led = PORTB.5  'status LED
-Symbol pwr_sense = PORTA.1  'input for power monitoring
+Symbol hw_enable = PORTA.2  'high = входы активированы
+Symbol zone1 = PORTB.4  'вход: зона 1, low = активирована
+Symbol zone2 = PORTB.3  'вход: зона 1, low = активирована
+Symbol zone3 = PORTB.0  'вход: зона 1, low = активирована
+Symbol zone4 = PORTA.4  'вход: зона 1, low = активирована
+Symbol aux_out = PORTA.0  'Порт сирены
+Symbol relay = PORTA.3  'Релейный выход
+Symbol led = PORTB.5  'Светодиодный индикатор состояния
+Symbol pwr_sense = PORTA.1  'Вход для контроля мощности
 
 
 
-'**** MAIN PROGRAM ****
+'**** Основная программа ****
 main:
-'disable comperator in RA0-3
+'отключить компаратор в RA0-3
 	ASM:        MOVLW 0x07
 	ASM:        MOVWF CMCON
 relay = 0
 aux_out = 0
 
-WaitMs 2000  'wait for system to stabilize (charge pumps in rs232 drivers)
+WaitMs 2000  'Подождать, пока система стабилизируется (для драйверов RS232)
 
-'initialize serial hw port - port used for modem
+'Инициализировать серийный порт HW - порт, используемый модемом
 Hseropen 9600
 
-'more uart specific initialization
+'UART-специфичная инициализация
 ASM:        bcf status,rp0
 ASM:        bsf rcsta,spen
 ASM:        bcf rcsta,rx9
@@ -81,17 +81,17 @@ ASM:        bcf rcsta,sren
 ASM:        bsf rcsta,cren
 ASM:        bcf rcsta,ferr
 ASM:        bcf rcsta,rx9d
-'clear peripheral flags
+'сброс перифирийных флагов
 ASM:        clrf pir1
-'clear uart receiver
+'сброс UART-приемника
 ASM:        movf RCREG,W
 ASM:        movf RCREG,W
 ASM:        movf RCREG,W
-'initiating txif flag by sending anything
+'инициализация флага txif
 ASM:        movlw 0
 ASM:        movwf txreg
 
-'disable interrupts
+'запретить прерывания
 ASM:        clrf pie1
 
 
@@ -99,39 +99,39 @@ Define SEROUT_DELAYUS = 5000
 'SW serial port TX PORTB.6
 'SW serial port RX PORTB.7
 
-'**** Initialize modem *********
+'**** Инициализация модема *********
 start:
-'Send AT command to modem and check respons. Repeat until respons received
+'Послать AT-команду модему и проверить ответ. Повторять, пока ответ не будет получен.
 led = 1
 Gosub modem_ready
 If modemready = True Then
-	'initialise modem
-	Hserout "ate0", CrLf  'disable echo from modem.
+	'инициализация модема
+	Hserout "ate0", CrLf  'отключить ответы модема
 	Gosub waiting
-	Hserout "at+cpms=", 0x22, "SM", 0x22, CrLf  'use memory on SIM card
+	Hserout "at+cpms=", 0x22, "SM", 0x22, CrLf  'использовать память СИМ-карты
 	Gosub waiting
-	Hserout "at+cnmi=0,0,0,0", CrLf  'default value. Modem sends no respons for new message
+	Hserout "at+cnmi=0,0,0,0", CrLf  'Стандартное значение.
 	WaitMs 500
-	Hserout "AT+CMGF=1"  'setup text mode for SMS format
+	Hserout "AT+CMGF=1"  'установить текстовый режим для СМС
 	Gosub waiting
-	Hserout "at+cmgd=1"  'delete message in first position if any.
+	Hserout "at+cmgd=1"  'удалить сообщение, сохраненное в первой ячейке
 	Gosub waiting
 Else
 	Goto start
 Endif
 
-'read primary phone number
+'прочитать номер телефона
 Gosub waiting
 read_first_phoneno:
 Hserout "at+cpbf=", 0x22, "PRI", 0x22, CrLf
 Gosub get_number
 If j > 0 Then
 	Write 0, j
-	j = j - 1  'number of digits
+	j = j - 1  'количество цифр
 	For k = 0 To j Step 1
 		temp = data(k)
 		n = k + 1
-		Write n, temp  'store number in eeprom
+		Write n, temp  'сохранить номер в EEEPROM
 	Next k
 Else
 	WaitMs 1000
@@ -141,7 +141,7 @@ Endif
 
 
 
-'********** Main loop ******************
+'********** Основной цикл ******************
 hw_enable_status = 0
 armed = 0
 delaycount = 0
@@ -154,7 +154,7 @@ sec = 0
 
 led = 0
 menu:
-	WaitMs 250  'stroke signal
+	WaitMs 250
 	Gosub decrement_counters
 	Gosub check_arming
 	Gosub check_zones
@@ -167,16 +167,16 @@ End
 
 '* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 decrement_counters:
-'all timed events are based on counters.
+'все операции с временем основаны на счетчиках
 If delaycount = 0 Then
-	'all counters/timers are in seconds
+	'все таймеры/счетчики в секундах
 	If check_sms_count > 0 Then
 		check_sms_count = check_sms_count - 1
 	Endif
 	If alarmcount > 0 Then
 		alarmcount = alarmcount - 1
 	Endif
-	'count the hours from power on...
+	'часы с момента включения
 	If min = 60 Then
 		hour = hour + 1
 		min = 0
@@ -188,7 +188,7 @@ If delaycount = 0 Then
 			sec = sec + 1
 		Endif
 	Endif
-	delaycount = 4  'one count is 250 mS
+	delaycount = 4  'один пункт - 250 mS
 Else
 	delaycount = delaycount - 1
 Endif
@@ -196,11 +196,10 @@ Return
 
 check_arming:
 '********************************
-'hw = 1 (åben) -> hw_status = 0/armed = 0, armed 0 -> 1, hw_status 0->1
-'hw = 0 -> rutine afvikles ikke, armed = 0, siren shut-off
+'hw = 1 (открыто) -> hw_status = 0/armed = 0, armed 0 -> 1, hw_status 0->1
+'hw = 0 -> процедура не работает, armed = 0, сирена отключена
 
 If hw_enable <> hw_enable_status Then
-	'HW enable input changed.
 	armed = hw_enable
 	hw_enable_status = hw_enable
 Endif
@@ -216,15 +215,15 @@ Return
 
 check_zones:
 '***********************************************
-'check zones in every scan
+'проверять зоны при каждом сканировании
 If armed = 1 Then
 		If zone1 = 1 Then
 			If z1trigged = False Then
-			'zone activated
+			'зона активирована
 				z1trigged = True
 				aux_out = 1
 				Gosub init_sms
-				Hserout "Indgang 1 aktiv!", 0x1a
+				Hserout "Activity in zone 1!", 0x1a
 				alarmcount = 180
 				Gosub waiting
 			Endif
@@ -233,11 +232,11 @@ If armed = 1 Then
 		Endif
 		If zone2 = 0 Then
 			If z2trigged = False Then
-			'zone activated
+			'зона активирована
 				z2trigged = True
 				aux_out = 1
 				Gosub init_sms
-				Hserout "Indgang 2 aktiv!", 0x1a
+				Hserout "Activity in zone 2!", 0x1a
 				alarmcount = 180
 				Gosub waiting
 			Endif
@@ -246,11 +245,11 @@ If armed = 1 Then
 		Endif
 		If zone3 = 0 Then
 			If z3trigged = False Then
-			'zone activated
+			'зона активирована
 				z3trigged = True
 				aux_out = 1
 				Gosub init_sms
-				Hserout "Indgang 3 aktiv!", 0x1a
+				Hserout "Activity in zone 3!", 0x1a
 				alarmcount = 180
 				Gosub waiting
 			Endif
@@ -259,11 +258,11 @@ If armed = 1 Then
 		Endif
 		If zone4 = 1 Then
 			If z4trigged = False Then
-			'zone activated
+			'зона активирована
 				z4trigged = True
 				aux_out = 1
 				Gosub init_sms
-				Hserout "Indgang 4 aktiv!", 0x1a
+				Hserout "Activity in zone 4!", 0x1a
 				alarmcount = 180
 				Gosub waiting
 			Endif
@@ -276,15 +275,15 @@ Return
 check_power:
 '************************************************
 If pwr_sense <> pwr_status Then
-	'send SMS if changed
+	'отправить СМС если изменилось
 	Gosub init_sms
 	If pwr_sense = False Then
-	'power lost
-		Hserout "Forsyning tabt"
+	'питание потеряно
+		Hserout "Power is lost"
 	Else
-	'power restored
+	'питание восстановлено
 		powerfailure = True
-		Hserout "Forsyning OK"
+		Hserout "Power restored"
 	Endif
 	Hserout 0x1a  'Ascii 26
 	pwr_status = pwr_sense
@@ -294,7 +293,7 @@ Return
 
 update_siren:
 '******************************
-'sound alarm if armed (alarmcount will only be set if armed)
+'тревога, если система в режиме охраны (alarmcount будет установлен только в этом случае)
 If armed = 1 Then
 	If alarmcount > 0 Then
 		aux_out = 1
@@ -309,34 +308,34 @@ Return
 
 check_sms:
 '***********************************
-'check for new SMS message every 10 sec.
+'проверять входящие сообщения каждые 10 секунд
 If check_sms_count = 0 Then
 		Toggle led
-		Gosub check_for_message  'check if a message is received
+		Gosub check_for_message  'проверить, и если сообщение получено
 		If smsreceived = True Then
 			Hserout "AT", CrLf
 			Gosub waiting
-			Hserout "at+cmgd=1", CrLf  'delete message
+			Hserout "at+cmgd=1", CrLf  'удалить сообщение
 			Gosub waiting
-			Hserout "at+cmgd=1", CrLf  'delete message
+			Hserout "at+cmgd=1", CrLf  'удалить сообщение
 			Gosub waiting
 		Endif
 		Gosub check_command
 		Toggle led
-		check_sms_count = 8  'Set number of counts for next check
+		check_sms_count = 8  'установить число тактов до следующей проверки
 	Endif
 Return                                            
 
 
 init_sms:
 '*******************************
-'send initial string to modem
+'отправить строку инициализации модему
 	Toggle led
 	Hserout "AT", CrLf
 	Gosub waiting
 	'send SMS
 	Hserout "at+cmgs=", 0x22
-	Read 0, temp  'read no. of digits in phone no.
+	Read 0, temp  'посчитать количество цифр в телефонном номере
 	'+4530123456
 	For j = 1 To temp
 		Read j, x
@@ -349,14 +348,14 @@ Return
 
 check_for_message:
 '****************
-'check for message in pos. 1
-'respons:
-'if no massage available in this position:
+'проверить сообщение в первой ячейке
+'ответить:
+'если сообщение отсутствует:
 '+CMS ERROR: 321
-'if message available in this position, e.g.:
+'если сообщение есть:
 '+CMGR: "REC UNREAD","+45xxxxxxxx",,"dd/mm/yy,hh:mm:ss+08"
 '#1268:0'
-'read data and store in buffer if '#' found. j contains no. of characters stored
+'считать информацию и записать в буфер, если '#' найден. В j хранится количество символов.
 j = 0
 i = 0
 startmark = False
@@ -367,7 +366,7 @@ Hserout "at+cmgr=1", CrLf
 loop:
 	Gosub hserget2
 	If serdata > 0 Then
-		'check if quote is found->this is not an error message
+		'проверить, если символ есть - это не сообщение об ошибке
 		If serdata = 0x22 Then
 			smsreceived = True
 		Endif
@@ -375,8 +374,8 @@ loop:
 			startmark = True
 		Endif
 		If startmark = True Then
-			data(j) = serdata  'store data in buffer
-			If j = 64 Then  'handle buffer overflow
+			data(j) = serdata  'записать информацию в буфер
+			If j = 64 Then  'обработать переполнение буфера
 				j = 0
 			Else
 				j = j + 1
@@ -384,88 +383,86 @@ loop:
 		Endif
 	Endif
 	i = i + 1
-	If i = 10000 Then Return  'timeout
+	If i = 10000 Then Return  'таймаут
 Goto loop
 Return                                            
 
 check_command:
 '****************************
-If j > 0 Then  'buffer contains data
+If j > 0 Then  'буфер содержит данные
 	j = j - 1
-	'check pincode in command
-	'pin code is 4 digit after #-sign in SMS stored in data().
-	'this is compared with the last 4 digits of primary phone number stored
-	'in eeprom (1st position is the length of the stored phone number
+	'проверить пин-код в команде
+	'пин-код - четыре цифры после символа "#" в СМС, сохраненном в data().
+	'это число сравнивается с последними четырьмя числами телефонного номера,
+	'хранящегося в EEPROM.
 	pincode = True
-	Read 0, x  'read number of digits in phone number
-	y = x - 4  'cal. start position for pin-code compare
+	Read 0, x  'посчитать количество цифр в номере
+	y = x - 4  'отсчитать стартовую позицию для сравнения
 	For j = 1 To 4 Step 1
-		y = y + 1  'calculate relative offset for phone no.
-		Read y, a  'read digit in
+		y = y + 1  'высчитать относительное смещение
+		Read y, a  'считать цифру
 		x = data(j)
 		If x <> a Then pincode = False
 	Next j
-	'execute command if pincode is valid
+	'выполнить команду если пин-код подходит
 	If pincode = True Then
-		If data(5) = ":" Then  'check for command separator
-		'commands:  1/0 - on/off of relay output
-		'T/F - Til/fra of alarm/inputs
-		'r   - reboot system, start from 0000
-		'v   - send version number of firmware
-		'?   - Status request (relay and alarm)
+		If data(5) = ":" Then  'проверить наличие разделителя
+		'команды:  1/0 - включить/выключить релейный выход
+		'T/F - включить/выключить of сигнализацию/входы
+		'r   - перезапустить систему, начать с 0000
+		'v   - отправить версию прошивки
+		'?   - запрос отчета (реле и сигнализация)
 
-			If data(6) = "1" Then  'relay on
+			If data(6) = "1" Then  'включить реле
 				relay = 1
 				Gosub init_sms
-				Hserout "Udgang: TIL", 0x1a
+				Hserout "Output is ON", 0x1a
 			Endif
-			If data(6) = "0" Then  'relay off
+			If data(6) = "0" Then  'отключить реле
 				relay = 0
 				Gosub init_sms
-				Hserout "Udgang: FRA", 0x1a
+				Hserout "Output is OFF", 0x1a
 			Endif
-			If data(6) = "F" Or data(6) = "f" Then  'Disable inputs
-			'disable inputs
+			If data(6) = "F" Or data(6) = "f" Then  'отключить входы
 				armed = 0
 				Gosub init_sms
-				Hserout "Alarm: FRA", 0x1a
+				Hserout "Alarm is OFF", 0x1a
 			Endif
-			If data(6) = "T" Or data(6) = "t" Then  'Enable inputs
-			'enable input
+			If data(6) = "T" Or data(6) = "t" Then  'включить входы
 				Gosub init_sms
 				If hw_enable = 0 Then
-					Hserout "Valg ej muligt", 0x1a
+					Hserout "Сan not be performed", 0x1a
 				Else
 					armed = 1
-					Hserout "Alarm: TIL", 0x1a
+					Hserout "Alarm is ON", 0x1a
 				Endif
 			Endif
 
-			If data(6) = "?" Then  'command for system status
+			If data(6) = "?" Then  'команды проверки состояния системы
 				Gosub init_sms
 				If relay = 1 Then
-					Hserout "Udgang: TIL", CrLf
+					Hserout "Output is ON", CrLf
 				Else
-					Hserout "Udgang: FRA", CrLf
+					Hserout "Output is OFF", CrLf
 				Endif
 				If armed = 0 Then
-					Hserout "Alarm: FRA"
+					Hserout "Alarm is OFF"
 				Else
-					Hserout "Alarm: TIL"
+					Hserout "Alarm is ON"
 				Endif
 				Hserout 0x1a
 			Endif
-			If data(6) = "v" Then  'send version no.
+			If data(6) = "v" Then  'отправить версию прошивки
 				Gosub init_sms
-				Hserout "GSM-SIO4 v0.b", 0x1a
+				Hserout "GAS v 0.1", 0x1a
 			Endif
-			If data(6) = "r" Then  'reboot system
+			If data(6) = "r" Then  'перезапустить систему
 				Goto main
 			Endif
 				
 		Endif
 	Endif
-	'clear buffer
+	'очистить буфер
 	For k = 0 To 40 Step 1
 		data(k) = 0xff
 	Next k
@@ -475,11 +472,11 @@ Return
 
 get_number:
 '****************
-'read phone number from SIM card
-'read from serial port and search after " and + and store from + to last " in buffer.
-'respond if no. found: +CPBF: 1,"+45xxxxxxxx",145,"PRIMARY!"
-'respond if not found: ???
-'if j=0 no data found. Otherwise j is the number of chars in the buffer.
+'считать номер телефона с СИМ-карты
+'считать из последовательного порта и найти после " и +, сохранить в буфер, начиная с + и заканчивая последним "
+'ответить, если номер найден: +CPBF: 1,"+45xxxxxxxx",145,"PRIMARY!"
+'ответить, если номер не найден: ???
+'если j = 0 - данные не найдены. В противном случае, в j хранится количество символов в буфере.
 
 j = 0
 i = 0
@@ -488,7 +485,7 @@ startmark = False
 loop_nr:
 	Gosub hserget2
 	If serdata > 0 Then
-		temp = LookUp(0x22, "+"), k  'search for " and then for +
+		temp = LookUp(0x22, "+"), k  'искать ", затем +
 		If serdata = temp Then
 			k = k + 1
 			If k = 2 Then
@@ -499,7 +496,7 @@ loop_nr:
 			startmark = False
 		Endif
 		If startmark = True Then
-			data(j) = serdata  'store data in buffer
+			data(j) = serdata  'записать информацию в буфер
 			If j = 64 Then
 				j = 0
 			Else
@@ -508,25 +505,25 @@ loop_nr:
 		Endif
 	Endif
 	i = i + 1
-	If i = 10000 Then Return  'timeout
+	If i = 10000 Then Return  'таймаут
 Goto loop_nr
 Return                                            
 
 modem_ready:
 '* * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-'sends AT command to modem and wait for OK to be received.
-'respond will be ERROR or OK. Only character 'k' is checked
+'послать AT-команды в модем, ждать OK
+'результатом будет ERROR или OK. Проверяется только символ "K".
 modemready = False
 Hserout "AT", CrLf
 loop_mr:
 	Gosub hserget2
 	If serdata > 0 Then
-		If serdata = "K" Then  'OK received
+		If serdata = "K" Then  'OK получено
 			modemready = True
 		Endif
 	Endif
 	i = i + 1
-	If i = 20000 Then Return  'timeout
+	If i = 20000 Then Return  'таймаут
 Goto loop_mr
 Return                                            
 
@@ -539,29 +536,29 @@ Return
 
 hserget2:
 '*******************************************
-'serial input routine with error handling.
-'returns 0 in variable "serdata" if no data read
+'последовательный ввод с обработкой ошибок
+'возвращает 0 в переменной serdata, если данные не прочитаны
 ASM:ser_in: btfsc rcsta,oerr
 ASM:        goto overerror
 ASM:        btfsc rcsta,ferr
 ASM:        goto frameerror
-ASM:        clrw  'return 0 if no data
+ASM:        clrw  'вернуть 0, если нет данных
 ASM:        btfss pir1,rcif
 ASM:        goto end_call
-ASM:uart_gotit: bcf intcon,gie  'clear gie before read
+ASM:uart_gotit: bcf intcon,gie  'очистить gie перед чтением
 ASM:        btfsc intcon,gie
 ASM:        goto uart_gotit
 ASM:        movf rcreg,w
 ASM:        bsf intcon,gie
 ASM:        goto end_call
-ASM:overerror: bcf intcon,gie  'turn gie off
+ASM:overerror: bcf intcon,gie  'отключить gie
 ASM:        btfsc INTCON,GIE
 ASM:        goto overerror
 ASM:        bcf rcsta,cren
-ASM:        movf rcreg,w  'flush fifo
+ASM:        movf rcreg,w  
 ASM:        movf rcreg,w
 ASM:        movf rcreg,w
-ASM:        bsf rcsta,cren  'turn cren on, clear oerr flag
+ASM:        bsf rcsta,cren  'включить cren, очистить oerr
 ASM:        bsf intcon,gie
 ASM:        goto ser_in
 ASM:frameerror: bcf intcon,gie
