@@ -81,7 +81,7 @@ ASM:        bcf rcsta,sren
 ASM:        bsf rcsta,cren
 ASM:        bcf rcsta,ferr
 ASM:        bcf rcsta,rx9d
-'сброс перифирийных флагов
+'сброс периферийных флагов
 ASM:        clrf pir1
 'сброс UART-приемника
 ASM:        movf RCREG,W
@@ -131,7 +131,7 @@ If j > 0 Then
 	For k = 0 To j Step 1
 		temp = data(k)
 		n = k + 1
-		Write n, temp  'сохранить номер в EEEPROM
+		Write n, temp  'сохранить номер в EEPROM
 	Next k
 Else
 	WaitMs 1000
@@ -275,7 +275,7 @@ Return
 check_power:
 '************************************************
 If pwr_sense <> pwr_status Then
-	'отправить СМС если изменилось
+	'отправить СМС, если изменилось
 	Gosub init_sms
 	If pwr_sense = False Then
 	'питание потеряно
